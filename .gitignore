@@ -21,3 +21,9 @@ data/raw/telegram_messages/
 
 # OS
 .DS_Store
+data/raw/
+target/
+logs/
+*.jpg
+*.png
+session.session
