@@ -40,3 +40,64 @@ Telegram Channels
 ---
 
 ## Project Structure
+
+medical-telegram-warehouse/
+│
+├── data/ # Raw JSON + images
+├── docs/ # Screenshots for dbt report
+├── medical_warehouse/ # dbt project
+│ ├── models/
+│ │ ├── staging/
+│ │ └── marts/
+│ └── tests/
+├── src/
+│ ├── scraper.py
+│ └── load_to_postgres.py
+├── logs/
+├── dbt_project.yml
+└── README.md
+
+
+---
+
+## Pipeline Steps
+
+### 1. Data Extraction
+- Scrapes latest 200 messages per channel
+- Downloads media (images)
+- Stores structured JSON files
+
+### 2. Data Loading
+- Loads JSON into PostgreSQL table:
+  `raw.telegram_messages`
+
+### 3. dbt Transformations
+- staging: `stg_telegram_messages`
+- marts:
+  - `dim_channels`
+  - `dim_dates`
+  - `fct_messages`
+
+### 4. Data Quality Tests
+- Ensure valid views
+- Ensure no future timestamps
+- Relationship constraints on facts
+
+---
+
+## How to Run
+
+### 1. Scrape data
+```bash
+python src/scraper.py
+2. Load into Postgres
+python src/load_to_postgres.py
+3. Run dbt
+dbt run
+dbt test
+dbt docs generate
+dbt docs serve
+Outputs
+Clean analytical tables in Postgres
+dbt lineage graph
+Tested and validated dataset
