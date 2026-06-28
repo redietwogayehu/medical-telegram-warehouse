@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Secrets
+.env
+session.session
+
+# dbt
+target/
+dbt_packages/
+
+# logs
+logs/
+
+# Data (IMPORTANT for clean repo)
+data/raw/images/
+data/raw/telegram_messages/
+
+# OS
+.DS_Store

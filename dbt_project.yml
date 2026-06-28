@@ -1,0 +1,15 @@
+name: medical_warehouse
+version: '1.0'
+config-version: 2
+
+profile: medical_warehouse
+
+model-paths: ["medical_warehouse/models"]
+test-paths: ["medical_warehouse/tests"]
+
+models:
+  medical_warehouse:
+    staging:
+      +schema: staging
+    marts:
+      +schema: marts
