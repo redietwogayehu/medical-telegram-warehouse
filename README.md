@@ -2,55 +2,57 @@
 
 ## Overview
 
-This project implements an end-to-end data engineering pipeline that collects medical-related Telegram data, transforms it into an analytical warehouse, enriches image data using YOLOv8 object detection, exposes analytics through a FastAPI service, and orchestrates the workflow with Dagster.
+Medical Telegram Warehouse is an end-to-end ELT data engineering project developed for **Kara Solutions**. The pipeline collects medical-related content from Ethiopian Telegram channels, stores raw data in PostgreSQL, transforms it into an analytical warehouse using dbt, enriches images with YOLOv8 object detection, exposes analytical insights through FastAPI, and orchestrates workflows using Dagster.
 
-The project was developed for **Kara Solutions** to enable analytical insights from Ethiopian medical Telegram channels.
+The project demonstrates a complete modern data engineering workflow from data ingestion to analytics-ready datasets and APIs.
 
 ---
 
-## Business Objective
+# Business Objective
 
-The goal is to build a robust ELT pipeline capable of transforming raw Telegram data into a structured analytical warehouse for answering business questions such as:
+The objective is to build a scalable analytical platform that converts unstructured Telegram data into structured business intelligence.
 
-- Which medical products are mentioned most frequently?
-- Which Telegram channels are the most active?
-- How does engagement (views and forwards) change over time?
-- What visual objects appear most often in medical advertisements?
-- Which channels generate the highest audience engagement?
+The platform enables analysis such as:
+
+- Identifying the most frequently promoted medical products
+- Comparing activity across Telegram channels
+- Measuring engagement using views and forwards
+- Tracking posting trends over time
+- Detecting visual objects appearing in advertisements using YOLOv8
 
 ---
 
 # Architecture
 
-```
+```text
 Telegram Channels
         │
         ▼
- Python Scraper (Telethon)
+Python Scraper (Telethon)
         │
         ▼
- Raw JSON + Images (Data Lake)
+Raw JSON + Images (Data Lake)
         │
         ▼
- PostgreSQL Data Warehouse
+PostgreSQL (Raw Layer)
         │
         ▼
- dbt Transformations
+dbt Transformations
 (Staging → Star Schema)
         │
         ▼
- YOLOv8 Image Detection
+YOLOv8 Image Detection
         │
         ▼
- FastAPI Analytical Endpoints
+FastAPI Analytics API
         │
         ▼
- Dagster Pipeline Orchestration
+Dagster Pipeline Orchestration
 ```
 
 ---
 
-## Channels Scraped
+# Telegram Channels
 
 - CheMed123
 - LobeliaCosmetics
@@ -72,9 +74,9 @@ Telegram Channels
 
 ---
 
-# Project Structure
+# Repository Structure
 
-```
+```text
 medical-telegram-warehouse/
 
 ├── api/
@@ -83,12 +85,16 @@ medical-telegram-warehouse/
 │   └── database.py
 │
 ├── data/
-│   ├── raw/
-│   │   ├── telegram_messages/
-│   │   └── images/
+│   └── raw/
+│       ├── telegram_messages/
+│       └── images/
 │
 ├── docs/
 │   └── screenshots/
+│       ├── api/
+│       ├── dagster/
+│       ├── dbt/
+│       └── yolo/
 │
 ├── medical_warehouse/
 │   ├── models/
@@ -112,65 +118,82 @@ medical-telegram-warehouse/
 
 ---
 
-# Pipeline Workflow
+# Project Workflow
 
 ## Task 1 — Telegram Data Collection
 
-- Scrape Telegram messages using Telethon
-- Download message images
-- Store raw JSON files
-- Build the project data lake
+The pipeline uses **Telethon** to:
+
+- Extract Telegram messages
+- Download associated images
+- Save raw JSON files
+- Build the project's data lake
 
 ---
 
 ## Task 2 — Data Warehouse & dbt
 
-Load raw data into PostgreSQL.
+Raw Telegram data is loaded into PostgreSQL under the **raw** schema.
 
-Create a dimensional warehouse consisting of:
+dbt transforms the data into an analytical star schema consisting of:
+
+### Staging
 
 - `stg_telegram_messages`
+
+### Dimensions
+
 - `dim_channels`
 - `dim_dates`
+
+### Fact Tables
+
 - `fct_messages`
 
-Run dbt tests to validate:
+Data quality tests validate:
 
-- Non-null values
-- Relationships
-- Positive view counts
-- No future timestamps
+- Non-null fields
+- Valid relationships
+- Positive engagement metrics
+- Valid timestamps
 
-Generate dbt documentation and lineage graphs.
+dbt also generates documentation and lineage graphs.
 
 ---
 
-## Task 3 — Image Enrichment
+## Task 3 — YOLOv8 Image Enrichment
 
-YOLOv8 is used to detect objects within downloaded Telegram images.
+Downloaded Telegram images are processed using **YOLOv8** object detection.
 
-Detected objects are stored in:
+Detected objects are stored in PostgreSQL:
 
-- `fct_image_detections`
+```
+raw.fct_image_detections
+```
 
-Example attributes include:
+Each record contains:
 
 - message_id
 - channel_name
+- image_path
 - detected_object
 - confidence
-- image_path
+- created_at
+
+This enrichment enables future visual analytics alongside message metadata.
 
 ---
 
 ## Task 4 — Analytical API
 
-FastAPI exposes analytical endpoints including:
+FastAPI exposes analytical endpoints for querying warehouse data.
 
-- Top products
-- Channel activity
-- Message search
-- Image detection statistics
+Example endpoints include:
+
+- `/top-products`
+- `/channel-activity`
+- `/messages/search`
+- `/image-detections`
 
 Run locally:
 
@@ -178,7 +201,7 @@ Run locally:
 uvicorn api.main:app --reload
 ```
 
-Interactive documentation:
+Swagger documentation:
 
 ```
 http://127.0.0.1:8000/docs
@@ -188,7 +211,7 @@ http://127.0.0.1:8000/docs
 
 ## Task 5 — Pipeline Orchestration
 
-Dagster orchestrates the pipeline through software-defined assets.
+Dagster orchestrates the pipeline using software-defined assets.
 
 Current assets include:
 
@@ -204,27 +227,45 @@ dagster dev -f pipelines/definitions.py
 
 ---
 
-# Running the Project
+# Getting Started
 
-## 1. Install dependencies
+## Clone the repository
+
+```bash
+git clone https://github.com/redietwogayehu/medical-telegram-warehouse.git
+cd medical-telegram-warehouse
+```
+
+## Create a virtual environment
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+## Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## 2. Scrape Telegram
+---
+
+# Running the Pipeline
+
+### 1. Scrape Telegram data
 
 ```bash
 python src/scraper.py
 ```
 
-## 3. Load PostgreSQL
+### 2. Load data into PostgreSQL
 
 ```bash
 python src/load_to_postgres.py
 ```
 
-## 4. Run dbt
+### 3. Build the warehouse
 
 ```bash
 dbt run
@@ -233,19 +274,19 @@ dbt docs generate
 dbt docs serve
 ```
 
-## 5. Run YOLO Detection
+### 4. Perform YOLOv8 image detection
 
 ```bash
 python src/detect_objects.py
 ```
 
-## 6. Start FastAPI
+### 5. Launch the API
 
 ```bash
 uvicorn api.main:app --reload
 ```
 
-## 7. Start Dagster
+### 6. Launch Dagster
 
 ```bash
 dagster dev -f pipelines/definitions.py
@@ -253,18 +294,19 @@ dagster dev -f pipelines/definitions.py
 
 ---
 
-# Outputs
+# Project Outputs
 
-The project produces:
+The completed pipeline produces:
 
-- Raw Telegram JSON data
+- Raw Telegram JSON files
 - Downloaded Telegram images
-- PostgreSQL analytical warehouse
-- dbt star schema
-- dbt documentation and lineage graph
-- YOLOv8 object detections
+- PostgreSQL warehouse tables
+- dbt staging and mart models
+- Star schema for analytics
+- dbt documentation and lineage
+- YOLOv8 image detections stored in PostgreSQL
 - FastAPI analytical endpoints
-- Dagster orchestration pipeline
+- Dagster orchestration workflow
 
 ---
 
@@ -272,20 +314,23 @@ The project produces:
 
 The repository includes screenshots demonstrating:
 
+- Telegram scraping
 - dbt execution
 - dbt documentation
 - dbt lineage graph
+- YOLOv8 inference
+- PostgreSQL image detections
 - FastAPI Swagger UI
-- Dagster UI
-- Pipeline execution
+- Dagster UI and asset execution
 
 ---
 
 # Future Improvements
 
 - Incremental dbt models
-- Scheduled pipeline execution
-- Entity recognition for medicines
+- Scheduled Dagster jobs
+- Medical entity recognition
 - Sentiment analysis
-- Advanced product recommendation analytics
-- Production deployment using Docker and cloud infrastructure
+- Product recommendation analytics
+- Docker containerization
+- Cloud deployment
