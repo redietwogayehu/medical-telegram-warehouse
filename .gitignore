@@ -1,29 +1,57 @@
 # Python
 __pycache__/
-*.pyc
-.venv/
-venv/
+*.py[cod]
+*.pyo
+*.pyd
 
-# Secrets
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Environment variables
 .env
-session.session
+
+# Python cache
+.pytest_cache/
+.mypy_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Database
+*.db
+
+# Dagster
+.tmp_dagster_home*
+storage/
 
 # dbt
 target/
 dbt_packages/
-
-# logs
 logs/
 
-# Data (IMPORTANT for clean repo)
-data/raw/images/
-data/raw/telegram_messages/
-
-# OS
-.DS_Store
-data/raw/
-target/
-logs/
-*.jpg
-*.png
+# Telegram
 session.session
+*.session
+*.session-journal
+
+# Raw downloaded images
+data/raw/images/
+
+# Ignore generated JSON if required
+# data/raw/telegram_messages/
+
+# YOLO outputs
+runs/
+
+# Python packaging
+build/
+dist/
+*.egg-info/
