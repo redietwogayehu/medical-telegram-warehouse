@@ -1,29 +1,16 @@
-version: 2
-
 models:
-  - name: dim_channels
-    columns:
-      - name: channel_key
-        tests:
-          - unique
-          - not_null
+  - name: fct_image_detections
+    description: YOLOv8 object detections extracted from Telegram images
 
-  - name: dim_dates
-    columns:
-      - name: date_key
-        tests:
-          - unique
-          - not_null
-
-  - name: fct_messages
     columns:
       - name: message_id
         tests:
-          - unique
           - not_null
-      - name: channel_key
+
+      - name: detected_object
         tests:
           - not_null
-          - relationships:
-              to: ref('dim_channels')
-              field: channel_key
+
+      - name: confidence
+        tests:
+          - not_null
