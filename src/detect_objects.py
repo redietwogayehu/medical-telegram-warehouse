@@ -25,20 +25,18 @@ model = YOLO("yolov8n.pt")
 def categorize_objects(objects):
     objects = [o.lower() for o in objects]
 
-    if any(
-        o in ["laptop", "cell phone", "keyboard", "mouse", "tv"]
-        for o in objects
-    ):
+    if any(o in ["laptop", "cell phone", "keyboard", "mouse", "tv"] for o in objects):
         return "electronics"
 
-    if any(
-        o in ["bottle", "pill", "medicine", "cup"]
-        for o in objects
-    ):
+    if any(o in ["bottle", "pill", "medicine", "cup"] for o in objects):
         return "medical_product"
 
     if "person" in objects:
         return "people"
+
+    # REQUIRED 4th category explicitly defined
+    if any(o in ["book", "stop sign", "refrigerator", "bird", "dining table"] for o in objects):
+        return "general_objects"
 
     return "other"
 
