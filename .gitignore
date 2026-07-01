@@ -42,9 +42,6 @@ session.session
 *.session
 *.session-journal
 
-# Raw downloaded images
-data/raw/images/
-
 # Ignore generated JSON if required
 # data/raw/telegram_messages/
 
@@ -55,3 +52,12 @@ runs/
 build/
 dist/
 *.egg-info/
+
+echo "
+data/
+*.session
+.tmp_dagster_home*
+logs/
+__pycache__/
+*.pyc
+" >> .gitignore

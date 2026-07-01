@@ -4,6 +4,7 @@ import logging
 import asyncio
 from datetime import datetime
 from dotenv import load_dotenv
+from pathlib import Path
 from telethon import TelegramClient
 
 # ----------------------------
@@ -39,7 +40,7 @@ os.makedirs(RAW_DIR, exist_ok=True)
 os.makedirs(IMAGE_DIR, exist_ok=True)
 
 # ----------------------------
-# Telegram channels
+# Channels
 # ----------------------------
 CHANNELS = [
     "CheMed123",
@@ -48,24 +49,25 @@ CHANNELS = [
 ]
 
 # ----------------------------
-# Telegram client
+# FIXED SESSION PATH (CRITICAL)
 # ----------------------------
-client = TelegramClient("session", API_ID, API_HASH)
+SESSION_PATH = Path("data/session/telegram_session")
+SESSION_PATH.parent.mkdir(parents=True, exist_ok=True)
 
+client = TelegramClient(str(SESSION_PATH), API_ID, API_HASH)
 
 # ----------------------------
-# Scrape single channel
+# Scrape channel
 # ----------------------------
 async def scrape_channel(channel_name):
     logging.info(f"Scraping channel: {channel_name}")
-    print(f"\n[START] Scraping {channel_name}")
+    print(f"\n[START] Scraping {channel_name}", flush=True)
 
     messages_data = []
 
     try:
-        # Resolve channel
         entity = await client.get_entity(channel_name)
-        print(f"[OK] Resolved entity: {channel_name}")
+        print(f"[OK] Resolved entity: {channel_name}", flush=True)
 
         count = 0
 
@@ -83,7 +85,6 @@ async def scrape_channel(channel_name):
                 "forwards": message.forwards
             }
 
-            # Download image if exists
             if message.media:
                 image_path = f"{IMAGE_DIR}/{channel_name}_{message.id}.jpg"
                 try:
@@ -94,15 +95,15 @@ async def scrape_channel(channel_name):
 
             messages_data.append(msg)
 
-        print(f"[INFO] Total messages scanned: {count}")
-        print(f"[INFO] Total messages saved: {len(messages_data)}")
+        print(f"[INFO] Total messages scanned: {count}", flush=True)
+        print(f"[INFO] Total messages saved: {len(messages_data)}", flush=True)
 
     except Exception as e:
-        print(f"[ERROR] Failed scraping {channel_name}: {e}")
-        logging.error(f"Scraping failed for {channel_name}: {e}")
+        print(f"[ERROR] Failed scraping {channel_name}: {e}", flush=True)
+        logging.error(f"{channel_name}: {e}")
         return
 
-    # Save JSON (data lake format)
+    # Save output
     date_str = datetime.now().strftime("%Y-%m-%d")
     output_dir = f"{RAW_DIR}/{date_str}"
     os.makedirs(output_dir, exist_ok=True)
@@ -112,30 +113,31 @@ async def scrape_channel(channel_name):
     with open(file_path, "w") as f:
         json.dump(messages_data, f, indent=2)
 
-    print(f"[SAVED] {len(messages_data)} messages → {file_path}")
-    logging.info(f"Saved {len(messages_data)} messages for {channel_name}")
+    print(f"[SAVED] {len(messages_data)} messages → {file_path}", flush=True)
 
 
 # ----------------------------
-# Main pipeline
+# MAIN (SAFE FOR DAGSTER)
 # ----------------------------
 async def main():
-    await client.start(phone=PHONE)
-    print("[INFO] Telegram client started")
+    await client.connect()
+
+    if not await client.is_user_authorized():
+        raise Exception(
+            "Telegram not authorized. Run: python src/auth_telegram.py"
+        )
+
+    print("[INFO] Telegram client started", flush=True)
 
     for channel in CHANNELS:
-        try:
-            await scrape_channel(channel)
-        except Exception as e:
-            logging.error(f"Error scraping {channel}: {e}")
-            print(f"[ERROR] Channel failed: {channel}")
+        await scrape_channel(channel)
 
     await client.disconnect()
-    print("[INFO] Client disconnected")
+    print("[INFO] Client disconnected", flush=True)
 
 
 # ----------------------------
-# Entry point
+# ENTRY POINT
 # ----------------------------
 if __name__ == "__main__":
     asyncio.run(main())
